@@ -60,7 +60,7 @@ async def job():
     except Exception as e:
         logging.error(f"❌ An error occurred during the scheduled task: {e}")
 
-asyncio.run(job())
+# asyncio.run(job())
 
 # ✅ Schedule the job at specific times (every 4 hours)
 schedule.every().day.at("05:00").do(lambda: asyncio.run(job()))

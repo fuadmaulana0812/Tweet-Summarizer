@@ -47,10 +47,10 @@ async def job():
             formatted_tweets = await process_tweets(tweets_data, start_datetime, end_datetime)
             print(formatted_tweets)
 
-            # ✅ Post a Twitter thread
+            # # ✅ Post a Twitter thread
             await selenium_scraper.post_tweet(formatted_tweets)
 
-            # ✅ Post to Telegram channel
+            # # ✅ Post to Telegram channel
             telegram = Telegram()
             await telegram.send_telegram_message(formatted_tweets)
 
@@ -60,7 +60,7 @@ async def job():
     except Exception as e:
         logging.error(f"❌ An error occurred during the scheduled task: {e}")
 
-# asyncio.run(job())
+asyncio.run(job())
 
 # ✅ Schedule the job at specific times (every 4 hours)
 schedule.every().day.at("05:00").do(lambda: asyncio.run(job()))

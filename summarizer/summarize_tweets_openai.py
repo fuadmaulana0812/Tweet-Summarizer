@@ -25,7 +25,7 @@ async def process_tweets(tweet_data, start_datetime, end_datetime):
         logging.info(f"Processing tweets for the last {hours} hours.")
 
         # ✅ Header for the output
-        output = f"Desci Updates in last {hours} hours ({start_datetime.strftime('%d %B %Y %H:%M')} – {end_datetime.strftime('%H:%M')})\n\n"
+        output = f"🧪DeSci Updates in last {hours} hours ({start_datetime.strftime('%d %B %Y %H:%M')} – {end_datetime.strftime('%H:%M')})\n\n"
 
         for account, tweets in tweet_data.items():
             logging.info(f"Processing tweets for account: {account}")
@@ -59,7 +59,7 @@ async def process_tweets(tweet_data, start_datetime, end_datetime):
                     logging.error(f"Error summarizing tweet: {e}")
 
                 # ✅ Format the output
-                output += f"* {account}\n{summary}\nOriginal tweet: {tweet_url}\n\n"
+                output += f"{account}\n{summary}\n{tweet_url}\n\n"
 
         logging.info("Tweet processing completed successfully.")
         return output.strip()

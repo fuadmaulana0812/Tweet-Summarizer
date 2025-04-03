@@ -10,6 +10,8 @@ from datetime import datetime, timezone, timedelta
 import time
 from config.settings import settings
 import logging
+import unicodedata
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -66,7 +68,7 @@ class TwitterSelenium:
             bool: True if login is successful, False otherwise.
         """
         logging.info("🔑 Attempting to log in to Twitter...")
-        self.driver.get("https://twitter.com/login")
+        self.driver.get("https://x.com/login")
         time.sleep(3)
         try:
             username_field = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.NAME, "text")))
@@ -113,8 +115,8 @@ class TwitterSelenium:
         seen_urls = set() # Track seen URLs to avoid duplicates
 
         for user in users:
-            logging.info(f"🔍 Scraping tweets for @{user}...")
-            self.driver.get(f"https://twitter.com/{user}")
+            logging.info(f"🔍 Scraping tweets for @{user['username']}...")
+            self.driver.get(user["user_link"])
             time.sleep(10)
             
             tweets = self.driver.find_elements(By.XPATH, '//article[@data-testid="tweet"]')
@@ -124,7 +126,7 @@ class TwitterSelenium:
                 try:
                     tweet_text_element = tweet.find_element(By.XPATH, './/div[@data-testid="tweetText"]')
                     if not tweet_text_element:
-                        print(f"⚠️ No tweet text found for @{user}, skipping...")
+                        print(f"⚠️ No tweet text found for @{user['username']}, skipping...")
                         continue
                     tweet_text = tweet_text_element.text
                     timestamp_element = tweet.find_element(By.XPATH, './/time')
@@ -135,7 +137,7 @@ class TwitterSelenium:
                     tweet_link_element = tweet.find_element(By.XPATH, './/a[contains(@href, "/status/")]')
                     tweet_link = tweet_link_element.get_attribute("href")
 
-                    if user not in tweet_link or tweet_link in seen_urls:
+                    if user["username"] not in tweet_link or tweet_link in seen_urls:
                         continue
 
                     # Add the URL to the seen set
@@ -143,17 +145,36 @@ class TwitterSelenium:
 
                     if self.start_datetime <= tweet_datetime <= self.end_datetime:
                         user_tweets.append({
-                            "user": user,
+                            "user": user["username"],
                             "date_time": tweet_datetime,
                             "tweet": tweet_text,
                             "url": tweet_link
                         })
                 except Exception as e:
-                    logging.error(f"❌ Error parsing tweet from @{user}: {e}")
-            all_tweets[user] = user_tweets
+                    logging.error(f"❌ Error parsing tweet from @{user['username']}: {e}")
+            all_tweets[user["display_name"]] = user_tweets
 
         logging.info("✅ Tweet scraping completed!")
         return all_tweets
+    
+    def replace_emojis(self, text):
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # Emoticons
+            "\U0001F300-\U0001F5FF"  # Symbols & Pictographs
+            "\U0001F680-\U0001F6FF"  # Transport & Map Symbols
+            "\U0001F700-\U0001F77F"  # Alchemical Symbols
+            "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+            "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+            "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+            "\U0001FA00-\U0001FA6F"  # Chess Symbols
+            "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+            "\U00002702-\U000027B0"  # Dingbats
+            "\U000024C2-\U0001F251"  # Enclosed Characters
+            "]+",
+            flags=re.UNICODE,
+        )
+        return emoji_pattern.sub("*", text)
     
     async def post_tweet(self, tweet_text):
         """
@@ -171,14 +192,18 @@ class TwitterSelenium:
 
         logging.info("✍️ Posting tweet...")
         try:
-            self.driver.get("https://twitter.com/home")
+            # Normalize the text and replace emojis
+            normalized_text = ''.join(c for c in tweet_text if unicodedata.category(c) != 'Cs')
+            cleaned_text = self.replace_emojis(normalized_text)
+
+            self.driver.get("https://x.com/home")
             time.sleep(5)
 
             # Locate tweet box and enter text
             tweet_box = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Post text"]'))
             )
-            tweet_box.send_keys(tweet_text)
+            tweet_box.send_keys(cleaned_text[1:])
             time.sleep(2)
 
             # Click the tweet button

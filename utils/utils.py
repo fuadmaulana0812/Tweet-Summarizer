@@ -1,4 +1,4 @@
-import pandas as pd
+import json
 import logging
 
 # Configure logging
@@ -6,33 +6,25 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 async def read_user():
     """
-    Reads Twitter account data from an Excel file, filters valid accounts, and extracts usernames.
+    Reads the user data from the 'user.json' file and extracts the list of usernames.
 
     Returns:
-        list: A list of Twitter usernames extracted from the "Twitter Account" column.
+        list: A list of usernames extracted from the 'user.json' file.
     """
     try:
-        # Read the Excel file, skipping the first two rows
-        logging.info("📂 Reading Twitter accounts from Excel file...")
-        df = pd.read_excel('Twitter Accounts_DeSci AI Agent_210325.xlsx', skiprows=2)
-
-        # Filter rows where "Twitter Account" starts with "https"
-        df_filtered = df[df["Twitter Account"].astype(str).str.startswith("https")].copy()
-
-        # Extract username from the "Twitter Account" URL
-        df_filtered.loc[:, "Username"] = df_filtered["Twitter Account"].str.extract(r"https://x\.com/([^/]+)")
-
-        # Convert the usernames to a list
-        user_list = df_filtered["Username"].tolist()
-
-        logging.info(f"✅ Successfully extracted {len(user_list)} usernames.")
+        logging.info("Reading user data from 'user.json'.")
+        with open("user.json", "r", encoding="utf-8") as f:
+            user_list = json.load(f)
+        logging.info(f"Successfully extracted {len(user_list)} usernames.")
         return user_list
-    
     except FileNotFoundError:
-        logging.error("❌ Excel file not found. Please ensure the file exists and the path is correct.")
+        logging.error("❌ 'user.json' file not found.")
+        return []
+    except json.JSONDecodeError as e:
+        logging.error(f"❌ Error decoding JSON: {e}")
         return []
     except Exception as e:
-        logging.error(f"❌ An error occurred while reading Twitter accounts: {e}")
+        logging.error(f"❌ An unexpected error occurred: {e}")
         return []
 
 async def export_txt(formatted_tweets):

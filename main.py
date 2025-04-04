@@ -47,10 +47,10 @@ async def job():
             formatted_tweets = await process_tweets(tweets_data, start_datetime, end_datetime)
             print(formatted_tweets)
 
-            # # ✅ Post a Twitter thread
+            # ✅ Post a Twitter thread
             await selenium_scraper.post_tweet(formatted_tweets)
 
-            # # ✅ Post to Telegram channel
+            # ✅ Post to Telegram channel
             telegram = Telegram()
             await telegram.send_telegram_message(formatted_tweets)
 

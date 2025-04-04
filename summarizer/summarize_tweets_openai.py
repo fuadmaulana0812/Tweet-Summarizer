@@ -26,7 +26,13 @@ async def process_tweets(tweet_data, start_datetime, end_datetime):
 
         # ✅ Header for the output
         output = f"🧪DeSci Updates in last {hours} hours ({start_datetime.strftime('%d %B %Y %H:%M')} – {end_datetime.strftime('%H:%M')})\n\n"
-
+        
+        # Check if all lists in tweet_data are empty
+        if all(len(tweets) == 0 for tweets in tweet_data.values()):
+            logging.info("No tweets found for the specified time range.")
+            output += "No new updates from the DeSci projects for now."
+            return output.strip()
+        
         for account, tweets in tweet_data.items():
             logging.info(f"Processing tweets for account: {account}")
             for tweet in tweets:
